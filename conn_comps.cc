@@ -11,28 +11,22 @@ using namespace boost;
 
 typedef adjacency_list<vecS, vecS, undirectedS> Graph;
 
-void add_clique_to_graph(const vector<int32_t> &isoforms, Graph &g) {
-  for (size_t i = 0; i < isoforms.size(); i++)
-  for (size_t j = i+1; j < isoforms.size(); j++)
-    add_edge(isoforms[i], isoforms[j], g);
-}
-
 Graph construct_graph(samFile *bam, bam_hdr_t *header) {
   string last_qname;
-  vector<int32_t> isoforms;
+  int last_isoform;
   bool first = true;
   Graph g;
 
   bam1_t *b = bam_init1();
 
   while (sam_read1(bam, header, b) >= 0) {
-    string this_qname(bam_get_qname(b));
-    if (!first && last_qname != this_qname) {
-      add_clique_to_graph(isoforms, g);
-      isoforms.clear();
-    }
-    isoforms.push_back(b->core.tid);
+    string this_qname = bam_get_qname(b);
+    int this_isoform = b->core.tid;
+    if (!first && last_qname == this_qname)
+      add_edge(last_isoform, this_isoform, g);
+
     last_qname = this_qname;
+    last_isoform = this_isoform;
     first = false;
   }
 
