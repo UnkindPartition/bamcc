@@ -54,20 +54,18 @@ int main(int argc, char **argv) {
 
   // TODO check sorting order
   Graph g = construct_graph(bam, header);
+
+  sam_close(bam);
+
   vector<int> component(num_vertices(g));
   int num = connected_components(g, &component[0]);
-  cout << "Total number of isoforms: " << num_vertices(g) << endl;
-  cout << "Total number of components: " << num << endl;
   // Calculate max comp size
   map<int,int> count;
   for (int i : component) {
     count[i]++;
   }
 
-  auto max_comp_size_iter = max_element(std::begin(count), std::end(count),
-    [](const pair<int, int>& p1, const pair<int, int>& p2) {
-        return p1.second < p2.second; });
-  cout << "Maximum component size: " << max_comp_size_iter->second << endl;
-
-  sam_close(bam);
+  for (auto c : count) {
+    cout << c.second << endl;
+  }
 }
