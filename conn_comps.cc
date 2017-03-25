@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
   auto max_comp_size_iter = max_element(std::begin(count), std::end(count),
     [](const pair<int, int>& p1, const pair<int, int>& p2) {
         return p1.second < p2.second; });
-  cout << "Maximum component size: " << max_comp_size_iter->first << endl;
+  cout << "Maximum component size: " << max_comp_size_iter->second << endl;
 
   sam_close(bam);
 }
