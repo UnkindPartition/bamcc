@@ -89,6 +89,8 @@ class BamFile {
       read_header();
 
       int r = sam_read1(unq.get(), header.ptr(), rec.ptr());
+      if (r >= 0)
+        rec.eof = false;
       if (r == -1)
         rec.eof = true;
       if (r < -1)
