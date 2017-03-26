@@ -92,7 +92,7 @@ class BamFile {
       if (r == -1)
         rec.eof = true;
       if (r < -1)
-        throw runtime_error("The file appears corrupt");
+        throw runtime_error("The file appears corrupted");
       return rec;
     }
 };
