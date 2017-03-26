@@ -140,15 +140,21 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  vector<int> component;
-  int num_components;
+  try {
+    vector<int> component;
+    int num_components;
 
-  // TODO check sorting order
+    // TODO check sorting order
+    {
+      Graph g = construct_graph(BamFile(argv[1], BamMode::Read));
+      component.resize(num_vertices(g));
+      num_components = connected_components(g, &component[0]);
+    } // graph g should be released here
+
+    write_bam_files(BamFile(argv[1], BamMode::Read), num_components, component);
+  } catch (const std::exception &exc)
   {
-    Graph g = construct_graph(BamFile(argv[1], BamMode::Read));
-    component.resize(num_vertices(g));
-    num_components = connected_components(g, &component[0]);
-  } // graph g should be released here
-
-  write_bam_files(BamFile(argv[1], BamMode::Read), num_components, component);
+    std::cerr << exc.what() << endl;
+    exit(1);
+  }
 }
