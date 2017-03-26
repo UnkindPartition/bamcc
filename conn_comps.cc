@@ -44,6 +44,8 @@ class BamHeader {
     }
 };
 
+enum class BamMode { Read, Write };
+
 class BamFile {
   using deleter = int(*)(htsFile*);
   private:
@@ -59,8 +61,13 @@ class BamFile {
       }
     }
   public:
-    BamFile(const char *path) {
-      samFile *file = sam_open(path, "r");
+    BamFile(const char *path, BamMode mode) {
+      const char *mode_str;
+      switch (mode) {
+        case BamMode::Read: mode_str = "r"; break;
+        case BamMode::Write: mode_str = "wb"; break;
+      }
+      samFile *file = sam_open(path, mode_str);
       if (!file) {
         stringstream msg;
         msg << "Could not open input file: " << strerror(errno);
@@ -111,23 +118,25 @@ Graph construct_graph(BamFile file) {
   return g;
 }
 
+void write_bam_files(vector<int> component) {
+  return;
+}
+
 int main(int argc, char **argv) {
   if (argc != 2) {
     cerr << "USAGE: cc file.bam" << endl;
     exit(1);
   }
 
+  vector<int> component;
+  int num_components;
+
   // TODO check sorting order
-  Graph g = construct_graph(BamFile(argv[1]));
+  {
+    Graph g = construct_graph(BamFile(argv[1], BamMode::Read));
+    component.resize(num_vertices(g));
+    num_components = connected_components(g, &component[0]);
+  } // graph g should be released here
 
-  vector<int> component(num_vertices(g));
-  int num = connected_components(g, &component[0]);
-  map<int,int> count;
-  for (int i : component) {
-    count[i]++;
-  }
-
-  for (auto c : count) {
-    cout << c.second << endl;
-  }
+  write_bam_files(component);
 }
