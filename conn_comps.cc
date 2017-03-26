@@ -99,6 +99,38 @@ class BamFile {
     }
 };
 
+class ConnectedComponents {
+  public:
+    // component_of[i] is the component number of the element i
+    vector<int> component_of;
+    // elements_of[c] is vector of elements of component c
+    vector<vector<int>> elements_of;
+    // new_index_of[i] is the index of i in elements_of[component_of[i]]
+    vector<int> new_index_of;
+
+    ConnectedComponents(Graph g)
+      : component_of(num_vertices(g))
+      , new_index_of(num_vertices(g)) {
+      int n = connected_components(g, &component_of[0]);
+
+      elements_of.resize(n);
+      for (unsigned i = 0; i < component_of.size(); i++) {
+        elements_of[component_of[i]].push_back(i);
+      }
+
+      for (auto c : elements_of) {
+        for (unsigned i = 0; i < c.size(); i++)
+          new_index_of[c[i]] = i;
+      }
+    }
+    int num_components() {
+      return elements_of.size();
+    }
+    int num_elements() {
+      return component_of.size();
+    }
+};
+
 Graph construct_graph(BamFile file) {
   string last_qname;
   int last_isoform;
@@ -120,13 +152,13 @@ Graph construct_graph(BamFile file) {
   return g;
 }
 
-void write_bam_files(BamFile input, int num_components, vector<int> component) {
+void write_bam_files(BamFile input, ConnectedComponents comps) {
   // open files for writing
   vector<BamFile> files;
   const int buf_size = 30;
   vector<char> buf(buf_size);
-  files.reserve(num_components);
-  for (int i = 0; i < num_components; i++) {
+  files.reserve(comps.num_components());
+  for (int i = 0; i < comps.num_components(); i++) {
     int r = snprintf(buf.data(), buf_size-1, "component_%.6d.bam", i);
     if (r >= buf_size || r < 0)
       throw runtime_error("snprintf failed");
@@ -143,17 +175,13 @@ int main(int argc, char **argv) {
   }
 
   try {
-    vector<int> component;
-    int num_components;
+    // TODO check for SO/GO tag
+    Graph g = construct_graph(BamFile(argv[1], BamMode::Read));
+    ConnectedComponents comps(g);
+    // release Graph memory
+    g = Graph();
 
-    // TODO check sorting order
-    {
-      Graph g = construct_graph(BamFile(argv[1], BamMode::Read));
-      component.resize(num_vertices(g));
-      num_components = connected_components(g, &component[0]);
-    } // graph g should be released here
-
-    write_bam_files(BamFile(argv[1], BamMode::Read), num_components, component);
+    write_bam_files(BamFile(argv[1], BamMode::Read), comps);
   } catch (const std::exception &exc)
   {
     std::cerr << exc.what() << endl;
