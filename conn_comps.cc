@@ -1,5 +1,6 @@
 #include <htslib/sam.h>
 #include <iostream>
+#include <fstream>
 #include <cstring>
 #include <cstdint>
 #include <algorithm>
@@ -40,14 +41,26 @@ class BamHeader {
   using deleter = void(*)(bam_hdr_t*);
   private:
     shared_ptr<bam_hdr_t> sptr;
+    static shared_ptr<bam_hdr_t> alloc() {
+      if (auto p = bam_hdr_init()) {
+        return shared_ptr<bam_hdr_t>(p, bam_hdr_destroy);
+      } else {
+        throw bad_alloc();
+      }
+    }
   public:
     BamHeader() {};
     BamHeader(bam_hdr_t *header) : sptr(header, bam_hdr_destroy) {};
-    bam_hdr_t* ptr() {
+    bam_hdr_t* ptr() const {
       return sptr.get();
     }
     bool const operator!(){
       return !sptr;
+    }
+    // Create a BAM header that contains only a subset of isoforms
+    BamHeader(BamHeader orig, vector<int> ixs) : sptr(alloc()) {
+      bam_hdr_t *p = sptr.get();
+      p->n_targets = ixs.size();
     }
 };
 
@@ -108,37 +121,23 @@ class ConnectedComponents {
   public:
     // component_of[i] is the component number of the element i
     vector<int> component_of;
-    // elements_of[c] is vector of elements of component c
-    vector<vector<int>> elements_of;
-    // new_index_of[i] is the index of i in elements_of[component_of[i]]
-    vector<int> new_index_of;
 
-    ConnectedComponents(Graph g)
-      : component_of(num_vertices(g))
-      , new_index_of(num_vertices(g)) {
-      int n = connected_components(g, &component_of[0]);
-
-      elements_of.resize(n);
+    ConnectedComponents(const Graph &g) : component_of(num_vertices(g)) {
+      connected_components(g, &component_of[0]);
+    }
+    void write(const char *path, const BamHeader &bh) {
+      ofstream out(path);
+      out << "seqid\tseqname\tcomponent\n";
+      bam_hdr_t *hdr = bh.ptr();
       for (unsigned i = 0; i < component_of.size(); i++) {
-        elements_of[component_of[i]].push_back(i);
+        out << i << "\t" << hdr->target_name[i] << "\t" << component_of[i] << "\n";
       }
-
-      for (auto c : elements_of) {
-        for (unsigned i = 0; i < c.size(); i++)
-          new_index_of[c[i]] = i;
-      }
-    }
-    int num_components() {
-      return elements_of.size();
-    }
-    int num_elements() {
-      return component_of.size();
     }
 };
 
-Graph construct_graph(BamFile file) {
+Graph construct_graph(BamFile &file) {
   string last_qname;
-  int last_isoform;
+  int last_isoform = -1;
   bool first = true;
   Graph g;
 
@@ -157,36 +156,18 @@ Graph construct_graph(BamFile file) {
   return g;
 }
 
-void write_bam_files(BamFile input, ConnectedComponents comps) {
-  // open files for writing
-  vector<BamFile> files;
-  const int buf_size = 30;
-  vector<char> buf(buf_size);
-  files.reserve(comps.num_components());
-  for (int i = 0; i < comps.num_components(); i++) {
-    int r = snprintf(buf.data(), buf_size-1, "component_%.6d.bam", i);
-    if (r >= buf_size || r < 0)
-      throw runtime_error("snprintf failed");
-    files.push_back(BamFile(buf.data(), BamMode::Write));
-  }
-
-  return;
-}
-
 int main(int argc, char **argv) {
-  if (argc != 2) {
-    cerr << "USAGE: cc file.bam" << endl;
+  if (argc != 3) {
+    cerr << "USAGE: cc input.bam output.tsv" << endl;
     exit(1);
   }
 
   try {
     // TODO check for SO/GO tag
-    Graph g = construct_graph(BamFile(argv[1], BamMode::Read));
+    BamFile bam(argv[1], BamMode::Read);
+    Graph g = construct_graph(bam);
     ConnectedComponents comps(g);
-    // release Graph memory
-    g = Graph();
-
-    write_bam_files(BamFile(argv[1], BamMode::Read), comps);
+    comps.write(argv[2], bam.get_header());
   } catch (const std::exception &exc)
   {
     std::cerr << exc.what() << endl;
