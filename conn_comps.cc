@@ -118,7 +118,19 @@ Graph construct_graph(BamFile file) {
   return g;
 }
 
-void write_bam_files(vector<int> component) {
+void write_bam_files(BamFile input, int num_components, vector<int> component) {
+  // open files for writing
+  vector<BamFile> files;
+  const int buf_size = 30;
+  vector<char> buf(buf_size);
+  files.reserve(num_components);
+  for (int i = 0; i < num_components; i++) {
+    int r = snprintf(buf.data(), buf_size-1, "component_%.6d.bam", i);
+    if (r >= buf_size || r < 0)
+      throw runtime_error("snprintf failed");
+    files.push_back(BamFile(buf.data(), BamMode::Write));
+  }
+
   return;
 }
 
@@ -138,5 +150,5 @@ int main(int argc, char **argv) {
     num_components = connected_components(g, &component[0]);
   } // graph g should be released here
 
-  write_bam_files(component);
+  write_bam_files(BamFile(argv[1], BamMode::Read), num_components, component);
 }
