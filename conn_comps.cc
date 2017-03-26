@@ -15,9 +15,16 @@ class BamRecord {
   using deleter = void(*)(bam1_t*);
   private:
     unique_ptr<bam1_t, deleter> unq;
+    static unique_ptr<bam1_t, deleter> alloc() {
+      if (auto p = bam_init1()) {
+        return unique_ptr<bam1_t, deleter>(p, bam_destroy1);
+      } else {
+        throw bad_alloc();
+      }
+    }
   public:
-    bool eof;
-    BamRecord() : unq(bam_init1(), bam_destroy1) {};
+    bool eof{false};
+    BamRecord() : unq(alloc()) {};
     bam1_t* ptr() {
       return unq.get();
     }
@@ -89,8 +96,6 @@ class BamFile {
       read_header();
 
       int r = sam_read1(unq.get(), header.ptr(), rec.ptr());
-      if (r >= 0)
-        rec.eof = false;
       if (r == -1)
         rec.eof = true;
       if (r < -1)
