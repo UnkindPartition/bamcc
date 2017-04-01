@@ -139,7 +139,10 @@ Graph construct_graph(BamFile &file) {
   BamRecord rec;
 
   while (rec = file.next_record(), !rec.eof) {
-    map[rec.qname()].push_back(rec.ref_id());
+    int ref_id = rec.ref_id();
+    if (ref_id >= 0) { // ref_id == 0 => unmapped
+      map[rec.qname()].push_back(ref_id);
+    }
   }
 
   Graph g(file.get_header().n_refs());
