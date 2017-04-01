@@ -4,6 +4,7 @@
 #include <cstring>
 #include <cstdint>
 #include <algorithm>
+#include <unordered_map>
 #include <stdexcept>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/connected_components.hpp>
@@ -136,21 +137,19 @@ class ConnectedComponents {
 };
 
 Graph construct_graph(BamFile &file) {
-  string last_qname;
-  int last_isoform = -1;
-  bool first = true;
-  Graph g;
-
+  unordered_map<string,vector<int>> map;
   BamRecord rec;
-  while (rec = file.next_record(), !rec.eof) {
-    string this_qname = rec.qname();
-    int this_isoform = rec.ref_id();
-    if (!first && last_qname == this_qname)
-      add_edge(last_isoform, this_isoform, g);
 
-    last_qname = this_qname;
-    last_isoform = this_isoform;
-    first = false;
+  while (rec = file.next_record(), !rec.eof) {
+    map[rec.qname()].push_back(rec.ref_id());
+  }
+
+  Graph g;
+  for (auto pair : map) {
+    auto vec = pair.second;
+    for (size_t i = 1; i < vec.size(); i++) {
+      add_edge(vec[0], vec[i], g);
+    }
   }
 
   return g;
@@ -163,7 +162,6 @@ int main(int argc, char **argv) {
   }
 
   try {
-    // TODO check for SO/GO tag
     BamFile bam(argv[1], BamMode::Read);
     Graph g = construct_graph(bam);
     ConnectedComponents comps(g);
