@@ -1,0 +1,17 @@
+#!/bin/bash
+
+shopt -s nullglob
+
+# This script runs ./bamcc on the input files in test_files
+# and writes the output to the *.tsv files in the same directory.
+# Both input and output files are tracked in git;
+# therefore, you can check whether the tests pass by running
+# ./test followed by git diff.
+
+set -eu
+
+for input in test_files/*.sam test_files/*.bam test_files/*.cram
+do
+  output=${input%.*}.tsv
+  ./bamcc "$input" "$output"
+done

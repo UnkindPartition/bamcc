@@ -1,0 +1,14 @@
+@HD	VN:1.0	SO:unsorted
+@SQ	SN:isoform1	LN:1000
+@SQ	SN:isoform2	LN:1000
+@SQ	SN:isoform3	LN:1000
+@SQ	SN:isoform4	LN:1000
+@SQ	SN:isoform5	LN:1000
+@SQ	SN:isoform6	LN:1000
+@CO	6 isoforms, 1 component
+read1	0	isoform1	1	1	100M	*	0	0	*	*
+read1	256	isoform2	1	1	100M	*	0	0	*	*
+read1	256	isoform3	1	1	100M	*	0	0	*	*
+read1	256	isoform4	1	1	100M	*	0	0	*	*
+read1	256	isoform5	1	1	100M	*	0	0	*	*
+read1	256	isoform6	1	1	100M	*	0	0	*	*
