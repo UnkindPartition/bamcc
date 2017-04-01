@@ -58,11 +58,6 @@ class BamHeader {
     bool const operator!(){
       return !sptr;
     }
-    // Create a BAM header that contains only a subset of isoforms
-    BamHeader(BamHeader orig, vector<int> ixs) : sptr(alloc()) {
-      bam_hdr_t *p = sptr.get();
-      p->n_targets = ixs.size();
-    }
 };
 
 enum class BamMode { Read, Write };
