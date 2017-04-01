@@ -33,8 +33,11 @@ class BamRecord {
     string qname() {
       return string(bam_get_qname(unq.get()));
     }
-    int32_t ref_id() {
+    int32_t ref_id() const {
       return unq.get()->core.tid;
+    }
+    int32_t mate_ref_id() const {
+      return unq.get()->core.mtid;
     }
 };
 
@@ -139,9 +142,13 @@ Graph construct_graph(BamFile &file) {
   BamRecord rec;
 
   while (rec = file.next_record(), !rec.eof) {
-    int ref_id = rec.ref_id();
-    if (ref_id >= 0) { // ref_id == 0 => unmapped
+    int ref_id = rec.ref_id(),
+        mate_ref_id = rec.mate_ref_id();
+    if (ref_id >= 0) { // ref_id == -1 => unmapped
       map[rec.qname()].push_back(ref_id);
+    }
+    if (mate_ref_id >= 0) { // mate_ref_id == -1 => no mate
+      map[rec.qname()].push_back(mate_ref_id);
     }
   }
 
