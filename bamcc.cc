@@ -165,7 +165,7 @@ Graph construct_graph(BamFile &file) {
 
 int main(int argc, char **argv) {
   if (argc != 3) {
-    cerr << "USAGE: cc input.bam output.tsv" << endl;
+    cerr << "USAGE: bamcc input.bam output.tsv" << endl;
     exit(1);
   }
 
