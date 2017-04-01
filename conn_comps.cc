@@ -58,6 +58,9 @@ class BamHeader {
     bool const operator!(){
       return !sptr;
     }
+    int n_refs() const {
+      return ptr()->n_targets;
+    }
 };
 
 enum class BamMode { Read, Write };
@@ -139,7 +142,7 @@ Graph construct_graph(BamFile &file) {
     map[rec.qname()].push_back(rec.ref_id());
   }
 
-  Graph g;
+  Graph g(file.get_header().n_refs());
   for (auto pair : map) {
     auto vec = pair.second;
     for (size_t i = 1; i < vec.size(); i++) {
