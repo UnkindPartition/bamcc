@@ -38,6 +38,13 @@ where:
 3.  `component` is the 0-based component number to which the reference has been
     assigned.
 
+To extract, say, the 17th component into a separate bam file, run
+
+```
+samtools view -bh -o example.17.bam example.sorted.bam \
+  $(awk 'BEGIN{ORS=" "} NR>1 && $3==17 {print $2}' rsem_orig.tsv)
+```
+
 ## Building
 
 ### Dependencies
