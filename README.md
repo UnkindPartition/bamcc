@@ -4,7 +4,7 @@
 
 A set of sequence alignments (represented as a BAM/SAM/CRAM file) defines
 a bipartite graph in which the nodes are reference and template sequences
-and edges are alignments between a template and a reference.
+and the edges are alignments between a template and a reference.
 
 bamcc splits this graph into connected components and reports the mapping from
 reference sequences to their components.
